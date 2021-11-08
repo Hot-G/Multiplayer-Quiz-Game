@@ -6,18 +6,14 @@ using Photon.Realtime;
 using ExitGames.Client.Photon;
 
 public class PlayerController : MonoBehaviour, IOnEventCallback
-{
+{    
+    
+    public int PlayerID { get; set; }
     [SerializeField]
     private string _playerName;
-
-    public int PlayerID { get; set; }
-
     public string PlayerName
     {
-        get
-        {
-            return _playerName;
-        }
+        get => _playerName;
 
         set
         {
@@ -28,13 +24,11 @@ public class PlayerController : MonoBehaviour, IOnEventCallback
 
     [SerializeField]
     private PhotonView _photonView;
-
-    GameManager manager;
+    //IN GAME
+    private Answers givingAnswer;
 
     private void Start()
     {
-        manager = FindObjectOfType<GameManager>();
-
         if (_photonView.IsMine)
             _photonView.RPC("SetPlayer", RpcTarget.All, PlayerPrefs.GetString("PlayerName"));
 
@@ -62,9 +56,9 @@ public class PlayerController : MonoBehaviour, IOnEventCallback
     }
 
     [PunRPC]
-    public void PreparePlayers()
+    private void PreparePlayers()
     {
-        manager.PreparePlayers(PhotonNetwork.PlayerList);
+        GameManager.instance.PreparePlayers(PhotonNetwork.PlayerList);
 
         if(_photonView.IsMine)
             StartCoroutine(WaitStart());
@@ -74,13 +68,13 @@ public class PlayerController : MonoBehaviour, IOnEventCallback
     {
         for(int i = 3;i > 0; i--)
         {
-            manager.UpdateStartTimer(i);
+            GameManager.instance.UpdateStartTimer(i);
             yield return new WaitForSeconds(1);
         }
         //CLOSE START PANEL
-        manager.StartPanelActive(false);
+        GameManager.instance.StartPanelActive(false);
         //SHOW ANOTHER QUESTION
-        manager.Next();
+        GameManager.instance.Next();
     }
 
 
@@ -97,80 +91,52 @@ public class PlayerController : MonoBehaviour, IOnEventCallback
         switch (photonEvent.Code)
         {
             case 0:
-                manager.UpdateScore(playerName, (bool)((object[])photonEvent.CustomData)[2]);
+                GameManager.instance.UpdateScore(playerName, (bool)((object[])photonEvent.CustomData)[2]);
 
                 break;
             case 1:
-                manager.ShowAnswerPanel((byte)((object[])photonEvent.CustomData)[1]);
+                GameManager.instance.ShowAnswerPanel((byte)((object[])photonEvent.CustomData)[1]);
 
                 break;
             case 2:
-                manager.ShowAnswerPanel((byte)((object[])photonEvent.CustomData)[1]);
+                GameManager.instance.ShowAnswerPanel((byte)((object[])photonEvent.CustomData)[1]);
                 
                 break;
             case 3:
                 ShowEndScreen(playerName);
                 break;
         }
-
     }
 
-    public void ShowEndScreen(string playerName)
+    private void ShowEndScreen(string playerName)
     {
         Debug.Log(_photonView.IsMine + "   " + playerName);
         if (!_photonView.IsMine)
             return;
-
+/*        PhotonNetwork.LocalPlayer.CustomProperties = new Hashtable()
+        {
+            { "TrueAnswer", 0 }
+        }; */
         
         //ADD POINT
-        RoomManager.User user1 = RoomManager.instance.players[0];
-        RoomManager.User user2 = RoomManager.instance.players[1];
-
-        if (PhotonNetwork.IsMasterClient)
+        var user1 = PhotonNetwork.PlayerList[PhotonNetwork.IsMasterClient ? 0 : 1];
+        var user2 = PhotonNetwork.PlayerList[PhotonNetwork.IsMasterClient ? 1 : 0];
+        
+        if((int)user1.CustomProperties["TrueAnswer"] > (int)user2.CustomProperties["TrueAnswer"])
         {
-            if(user1.GetTrueAnswer() > user2.GetTrueAnswer())
-            {
-                int value = PlayerPrefs.GetInt("Point") + 1;
-                PlayerPrefs.SetInt("Point", value);
-                manager.FinishGame(0);
-            }
-            else if(user1.GetTrueAnswer() == 0)
-            {
-                manager.FinishGame(1);
-            }
-            else if(user1.GetTrueAnswer() == user2.GetTrueAnswer())
-            {
-                int value = PlayerPrefs.GetInt("Point") + 1;
-                Debug.Log("Master : " + value);
-                manager.FinishGame(2);
-            }
-            else
-            {
-                manager.FinishGame(1);
-            }
+            int value = PlayerPrefs.GetInt("Point") + 1;
+            PlayerPrefs.SetInt("Point", value);
+            GameManager.instance.FinishGame(0);
+        }
+        else if((int)user1.CustomProperties["TrueAnswer"] == (int)user2.CustomProperties["TrueAnswer"])
+        {
+            int value = PlayerPrefs.GetInt("Point") + 1;
+            Debug.Log("Master : " + value);
+            GameManager.instance.FinishGame(2);
         }
         else
         {
-            if (user1.GetTrueAnswer() < user2.GetTrueAnswer())
-            {
-                int value = PlayerPrefs.GetInt("Point") + 1;
-                PlayerPrefs.SetInt("Point", value);
-                manager.FinishGame(0);
-            }
-            else if (user2.GetTrueAnswer() == 0)
-            {
-                manager.FinishGame(1);
-            }
-            else if (user1.GetTrueAnswer() == user2.GetTrueAnswer())
-            {
-                int value = PlayerPrefs.GetInt("Point") + 1;
-                PlayerPrefs.SetInt("Point", value);
-                manager.FinishGame(2);
-            }
-            else
-            {
-                manager.FinishGame(1);
-            }
+            GameManager.instance.FinishGame(1);
         }
     }
 }

@@ -15,7 +15,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     public GameObject loadingCancelBtn;
 
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
         if (PhotonNetwork.IsConnected)
             return;

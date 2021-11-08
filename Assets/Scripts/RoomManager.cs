@@ -4,37 +4,37 @@ using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
+
+
+public class User
+{
+    public int id;
+    public string PlayerName;
+    public bool[] values;
+
+    public User(int id, string playerName)
+    {
+        this.id = id;
+        this.PlayerName = playerName;
+        values = new bool[3];
+    }
+
+    public int GetTrueAnswer()
+    {
+        int sum = 0;
+
+        for(int i = 0;i < 3; i++)
+        {
+            sum += System.Convert.ToInt32(values[i]);
+        }
+
+        return sum;
+    }
+}
 
 public class RoomManager : MonoBehaviourPunCallbacks
 {
-
-   public class User
-    {
-        public int id;
-        public string PlayerName;
-        public bool[] values;
-
-        public User(int id, string playerName)
-        {
-            this.id = id;
-            this.PlayerName = playerName;
-            values = new bool[3];
-        }
-
-        public int GetTrueAnswer()
-        {
-            int sum = 0;
-
-            for(int i = 0;i < 3; i++)
-            {
-                sum += System.Convert.ToInt32(values[i]);
-            }
-
-            return sum;
-        }
-    }
-
-
     public static RoomManager instance;
     
     private int numberOfPlayers;
@@ -43,12 +43,9 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
     private readonly int gameScene = 1;
 
-    public List<User> players = new List<User>();
-
     private void Awake()
     {
         //If RoomManager instance is created, destroy it
-
         if (instance == null)
         {
             instance = this;
@@ -58,35 +55,25 @@ public class RoomManager : MonoBehaviourPunCallbacks
             if (instance != this)
                 Destroy(gameObject);
         }
-
-        DontDestroyOnLoad(this);
-
-    }
-
-    public override void OnEnable()
-    {
-        base.OnEnable();
+        //ADD EVENTS
         PhotonNetwork.AddCallbackTarget(this);
         SceneManager.sceneLoaded += OnSceneLoaded;
+        DontDestroyOnLoad(this);
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
-        base.OnPlayerEnteredRoom(newPlayer);
-
-        numberOfPlayers = PhotonNetwork.PlayerList.Length;
-
         CheckPlayer();
     }
 
 
-    // CHECK NUMBER OF PLAYER, IF GREATER THAN 2, START GAME
+    // CHECK NUMBER OF PLAYER, IF EQUALS 2, START GAME
     private void CheckPlayer()
     {
         if (!PhotonNetwork.IsMasterClient)
             return;
 
-        if (numberOfPlayers == 2)
+        if (PhotonNetwork.PlayerList.Length == 2)
         {
             StartGame();
         }
@@ -97,10 +84,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     {
         PhotonNetwork.CurrentRoom.IsOpen = false;
         //Game level
-        SceneManager.LoadScene(gameScene);
-
-        _photonView.RPC("LoadPlayers", RpcTarget.All);
-
+        PhotonNetwork.LoadLevel(gameScene);
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -112,27 +96,20 @@ public class RoomManager : MonoBehaviourPunCallbacks
     }
 
     [PunRPC]
-    public void RPC_CreatePlayer()  //CREATE PLAYER CONTROLLER ON CLIENT
+    private void RPC_CreatePlayer()  //CREATE PLAYER CONTROLLER ON CLIENT
     {
-        GameObject obj = PhotonNetwork.Instantiate("Prefabs/PlayerController", Vector3.zero, Quaternion.identity);
+        PhotonNetwork.Instantiate("Prefabs/PlayerController", Vector3.zero, Quaternion.identity);
+    }
+    
+    //IN GAME PROPERTIES
+    public static int GetPlayerID(string playerName)
+    {
+        return ((PhotonNetwork.PlayerList[0].NickName == playerName) ? 0 : 1);
     }
 
-    [PunRPC]
-    public void LoadPlayers()   //ADD PLAYER INFO TO PLAYERS LIST ON CLIENT
-    {
-        Player[] _players = PhotonNetwork.PlayerList;
-
-        for (int i = 0; i < _players.Length; i++)
-        {
-            players.Add(new User(i, _players[i].NickName));
-        }
-       
-    }
     //IF PLAYER LEFT THE GAME, FINISH
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
-        base.OnPlayerLeftRoom(otherPlayer);
-
         GameManager.instance.FinishGame(0);
     }
 

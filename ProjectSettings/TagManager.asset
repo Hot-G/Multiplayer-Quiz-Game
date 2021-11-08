@@ -4,8 +4,11 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - true_answer
-  - wrong_answer
+  - Bullet
+  - A
+  - B
+  - C
+  - D
   layers:
   - Default
   - TransparentFX

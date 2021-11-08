@@ -233,9 +233,9 @@ RectTransform:
   m_RootOrder: 12
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -60}
-  m_SizeDelta: {x: 0, y: -140}
+  m_AnchorMax: {x: 1, y: 0.90770316}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &107320748
 MonoBehaviour:
@@ -1591,7 +1591,7 @@ GameObject:
   - component: {fileID: 700331698}
   m_Layer: 5
   m_Name: Answer_D
-  m_TagString: Untagged
+  m_TagString: D
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1924,6 +1924,7 @@ GameObject:
   m_Component:
   - component: {fileID: 742371806}
   - component: {fileID: 742371805}
+  - component: {fileID: 742371807}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -1971,46 +1972,7 @@ MonoBehaviour:
   endGamePanel: {fileID: 1819783192}
   endInfoTxt: {fileID: 1650294836}
   endCounterTxt: {fileID: 1858204507}
-  questions:
-  - question: 6 / 3 = ?
-    answer1:
-      answertxt: 1
-      isTrue: 0
-    answer2:
-      answertxt: 2
-      isTrue: 1
-    answer3:
-      answertxt: 3
-      isTrue: 0
-    answer4:
-      answertxt: 4
-      isTrue: 0
-  - question: "T\xFCrkiye' nin ba\u015Fkenti neresidir ?"
-    answer1:
-      answertxt: "\u0130stanbul"
-      isTrue: 0
-    answer2:
-      answertxt: "\u0130zmir"
-      isTrue: 0
-    answer3:
-      answertxt: Rize
-      isTrue: 0
-    answer4:
-      answertxt: Ankara
-      isTrue: 1
-  - question: "Bir futbol ma\xE7\u0131 ka\xE7 dakika s\xFCrer ?"
-    answer1:
-      answertxt: 45
-      isTrue: 0
-    answer2:
-      answertxt: 60
-      isTrue: 0
-    answer3:
-      answertxt: 90
-      isTrue: 1
-    answer4:
-      answertxt: 100
-      isTrue: 0
+  isInGame: 0
 --- !u!4 &742371806
 Transform:
   m_ObjectHideFlags: 0
@@ -2025,6 +1987,30 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &742371807
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 742371804}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dfe8eae68968a7469814322c84f5ade, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  questionCounter: -1
+  questionText: {fileID: 114216361}
+  answerTexts:
+  - {fileID: 355988993}
+  - {fileID: 413216558}
+  - {fileID: 171922208}
+  - {fileID: 733427978}
+  answerButtons:
+  - {fileID: 1533366881}
+  - {fileID: 1575314944}
+  - {fileID: 1646077401}
+  - {fileID: 700331698}
 --- !u!1 &765032058
 GameObject:
   m_ObjectHideFlags: 0
@@ -2400,7 +2386,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -86.58606, y: -25.387024}
+  m_AnchoredPosition: {x: -86.58606, y: -25.386963}
   m_SizeDelta: {x: 176.2357, y: 56.51341}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &943291538
@@ -2886,7 +2872,7 @@ GameObject:
   - component: {fileID: 1533366881}
   m_Layer: 5
   m_Name: Answer_A
-  m_TagString: Untagged
+  m_TagString: A
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2918,7 +2904,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1533366879}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
@@ -3016,7 +3002,7 @@ GameObject:
   - component: {fileID: 1575314944}
   m_Layer: 5
   m_Name: Answer_B
-  m_TagString: Untagged
+  m_TagString: B
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3354,7 +3340,7 @@ GameObject:
   - component: {fileID: 1646077401}
   m_Layer: 5
   m_Name: Answer_C
-  m_TagString: Untagged
+  m_TagString: C
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

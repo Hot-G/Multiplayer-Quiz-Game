@@ -24,23 +24,12 @@ public class GameManager : MonoBehaviourPunCallbacks
     public GameObject endGamePanel;
     public TMP_Text endInfoTxt, endCounterTxt;
 
-    [Header("Questions")]
-    public Question[] questions;
-    private List<Question> questionList;
-    Player[] playerList;
-
     [HideInInspector]
-    public bool isInGame = false;
+    public bool isInGame;
 
-    private readonly byte ShowAnswer = 0;
-    private readonly byte RightAnswer = 1;
-    private readonly byte WrongAnswer = 2;
-
-    private readonly Color blueColor = new Color(0.4f, 0.4f, 0.6f);
-    private readonly Color greenColor = new Color(0.1f, 0.8f, 0.1f);
-    private readonly Color redColor = new Color(0.8f, 0.1f, 0.1f);
-
-    private int QuestionCounter = -1;
+    private const byte ShowAnswer = 0;
+    private const byte GiveAnswer = 1;
+    private const byte WrongAnswer = 2;
 
     public static GameManager instance;
 
@@ -50,10 +39,6 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             instance = this;
         }
-
-        questionList = new List<Question>(questions);
-
-        playerList = PhotonNetwork.PlayerList;
     }
 
     public void PreparePlayers(Player[] players)
@@ -64,66 +49,38 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     public void Next()
     {
+        QuestionManager.Instance.questionCounter++;
 
-        QuestionCounter++;
-
-        if(QuestionCounter == 3)
+        if(QuestionManager.Instance.questionCounter == 3)
         {
             GameEnd();
             return;
         }
-
-        QuestionTxt.SetText(questionList[QuestionCounter].question);
-        Answer1Txt.SetText(questionList[QuestionCounter].answer1.answertxt);
-        answerButtons[0].tag = questionList[QuestionCounter].answer1.isTrue ? "true_answer" : "wrong_answer";
-        Answer2Txt.SetText(questionList[QuestionCounter].answer2.answertxt);
-        answerButtons[1].tag = questionList[QuestionCounter].answer2.isTrue ? "true_answer" : "wrong_answer";
-        Answer3Txt.SetText(questionList[QuestionCounter].answer3.answertxt);
-        answerButtons[2].tag = questionList[QuestionCounter].answer3.isTrue ? "true_answer" : "wrong_answer";
-        Answer4Txt.SetText(questionList[QuestionCounter].answer4.answertxt);
-        answerButtons[3].tag = questionList[QuestionCounter].answer4.isTrue ? "true_answer" : "wrong_answer";
-
-        AnswerButtonsSetEnabled(true);
-
+        //SHOW NEXT QUESTION
+        QuestionManager.Instance.NextQuestion();
+        
         StopAllCoroutines();
         StartCoroutine(QuestionTimer());
     }
 
     public void OnAnswerClick(Button button)
     {
-        button.GetComponent<Image>().color = blueColor;
-        AnswerButtonsSetEnabled(false);
-        RaiseAnswerEvent(button.CompareTag("true_answer") ? RightAnswer : WrongAnswer);
-
+        QuestionManager.Instance.ShowGivingAnswer(button);
+        QuestionManager.Instance.AnswerButtonsEnabled(false);
+        RaiseAnswerEvent((byte)button.tag[0]);
     }
 
-    public void RaiseAnswerEvent(byte code)
+    private void RaiseAnswerEvent(byte answer)
     {
-        string playerName = PlayerPrefs.GetString("PlayerName");
+        string playerName = PhotonNetwork.NickName;
+        var playerID = RoomManager.GetPlayerID(playerName);
+        object[] content = { playerName, answer };
+    
+        RaiseEvent(ShowAnswer, content);
+    }
 
-        byte playerID = GetPlayerID(playerName);
-
-        object[] content = null;
-
-        if (code == 0)
-        {
-            content = new object[] { playerName, playerID, RoomManager.instance.players[playerID].values[QuestionCounter] };
-
-            UpdateScore(playerName, RoomManager.instance.players[playerID].values[QuestionCounter]);
-        }
-            
-        else if(code != 3)
-        {
-            RoomManager.instance.players[playerID].values[QuestionCounter] = !Convert.ToBoolean(code - 1);
-
-            content = new object[] { playerName, playerID };
-        }
-        else
-        {
-            content = new object[] { playerName, playerID };
-        }
-
-
+    private void RaiseEvent(byte code, object[] content)
+    {
         RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All };
         SendOptions sendOptions = new SendOptions { Reliability = true };
 
@@ -138,7 +95,7 @@ public class GameManager : MonoBehaviourPunCallbacks
             yield return new WaitForSeconds(1);
         }
 
-        AnswerButtonsSetEnabled(false);
+        QuestionManager.Instance.AnswerButtonsEnabled(false);
 
         RaiseAnswerEvent(ShowAnswer);
 
@@ -183,50 +140,19 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     public void UpdateScore(string playerName, bool isTrue)
     {
-        if (GetPlayerID(playerName) == 0)
+        if (RoomManager.GetPlayerID(playerName) == 0)
         {
-            P1_InfoBox[QuestionCounter].color = isTrue ? greenColor : redColor;
-            RoomManager.instance.players[0].values[QuestionCounter] = isTrue;
+            P1_InfoBox[QuestionManager.Instance.questionCounter].color = isTrue ? GlobalResources.TrueAnswerColor : GlobalResources.WrongAnswerColor;
         }
         else
         {
-            P2_InfoBox[QuestionCounter].color = isTrue ? greenColor : redColor;
-            RoomManager.instance.players[1].values[QuestionCounter] = isTrue;
+            P2_InfoBox[QuestionManager.Instance.questionCounter].color = isTrue ? GlobalResources.TrueAnswerColor : GlobalResources.WrongAnswerColor;
         }
 
-        answerButtons[GetTrueAnswer()].GetComponent<Image>().color = greenColor;
-      
+        QuestionManager.Instance.ShowTrueAnswer();
     }
-
-    byte GetPlayerID(string playerName)
-    {
-        return ((playerList[0].NickName == playerName) ? (byte)0 : (byte)1);
-    }
-
-    public void AnswerButtonsSetEnabled(bool isEnabled)
-    {
-        for(int i = 0;i < answerButtons.Length; i++)
-        {
-            answerButtons[i].enabled = isEnabled;
-
-            if(isEnabled) answerButtons[i].GetComponent<Image>().color = new Color(1, 1, 1);
-        }
-    }
-
-    public int GetTrueAnswer()
-    {
-        for (int i = 0; i < answerButtons.Length; i++)
-        {
-            if (answerButtons[i].CompareTag("true_answer"))
-            {
-                return i;
-            }
-        }
-
-        return 0;
-    }
-
-    public void GameEnd()
+    
+    private void GameEnd()
     {
         RaiseAnswerEvent(3);
     }
@@ -256,7 +182,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         StartCoroutine(EndCounter());
     }
 
-    IEnumerator EndCounter()
+    private IEnumerator EndCounter()
     {
         for (int i = 10; i >= 0; i--)
         {
@@ -270,23 +196,11 @@ public class GameManager : MonoBehaviourPunCallbacks
     public void ReturnMainMenu()
     {
         StopAllCoroutines();
-
-        if (PhotonNetwork.IsMasterClient)
-        {
-            Destroy(GameObject.Find(RoomManager.instance.players[0].PlayerName));
-            Destroy(GameObject.Find(RoomManager.instance.players[1].PlayerName));
-        }
-
-        Destroy(RoomManager.instance.gameObject);
-
         PhotonNetwork.LeaveRoom();
     }
 
     public override void OnLeftRoom()
     {
-        base.OnLeftRoom();
-
-        SceneManager.LoadScene(0);
+        PhotonNetwork.LoadLevel(0);
     }
-
 }
